@@ -99,7 +99,7 @@ jobs:
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
           cache-from: "${{ matrix.cache-from }}"
           cache-to: "${{ matrix.cache-to }}"
-          tags: ghcr.io/${{ github.repository }}:armbian-next-${{env.DOCKERFILE_OS}}-${{env.DOCKERFILE_RELEASE}}-latest
+          tags: ${{ github.repository_owner }}/armbian-builder:armbian-next-${{env.DOCKERFILE_OS}}-${{env.DOCKERFILE_RELEASE}}-latest
 
       - name: sleep a random amount of seconds, up to 60, if build/push failed, before trying again
         if: steps.docker_build_first.outcome == 'failure'
