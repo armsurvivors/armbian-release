@@ -66,7 +66,7 @@ jobs:
 
   matrix_prep:
     name: "JSON matrix: 1/1 :: 1 artifact chunks, 1 image chunks"
-    if: ${{ github.repository_owner == 'rpardini' }}
+    if: ${{ github.repository_owner == 'armsurvivors' }}
     runs-on: [ "self-hosted", "Linux", 'armbian', "matrix-prepare" ]
     steps:
 
@@ -77,8 +77,8 @@ jobs:
       - name: "Prepare date-based release outputs"
         id: prepare-date-outputs
         run: |
-          echo "images_release=$(date +%y.%m.%d)-rpardini-${{ github.run_number }}" >> $GITHUB_OUTPUT
-          echo "revision_release=$(date +%y.%m.%d)-rpardini-${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "images_release=$(date +%y.%m.%d)-armsurvivors-${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "revision_release=$(date +%y.%m.%d)-armsurvivors-${{ github.run_number }}" >> $GITHUB_OUTPUT
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -235,7 +235,7 @@ jobs:
 # template file: 550.per-chunk-artifacts_job.yaml
 
   "build-artifacts-chunk-1": # templated "build-artifacts-chunk-1"
-    if: ${{ github.repository_owner == 'rpardini' && needs.matrix_prep.outputs.artifacts-chunk-not-empty-1 == 'yes' }}  # <-- HERE: Chunk number.
+    if: ${{ github.repository_owner == 'armsurvivors' && needs.matrix_prep.outputs.artifacts-chunk-not-empty-1 == 'yes' }}  # <-- HERE: Chunk number.
     needs: [ "matrix_prep" ]
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -303,7 +303,7 @@ jobs:
   "build-images-chunk-1": # templated "build-images-chunk-1"
     needs: [ "matrix_prep", "all-artifacts-and-repo-ready" ]
     timeout-minutes: 60
-    if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'rpardini' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-1 == 'yes' ) }} # <-- HERE: Chunk number.
+    if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'armsurvivors' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-1 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
       matrix: ${{ fromJSON(needs.matrix_prep.outputs.images-chunk-json-1) }} # <-- HERE: Chunk number.
