@@ -1,8 +1,8 @@
 name: docker-image-simple
 
 on:
-  #schedule:
-  #  - cron: '30 0 * * *' # Scheduled runs every day at 0:30am UTC
+  schedule:
+    - cron: '30 0 * * *' # Scheduled runs every day at 0:30am UTC
   workflow_dispatch:
   workflow_call:
 
@@ -19,26 +19,26 @@ jobs:
             platforms: "linux/amd64,linux/arm64" # Ubuntu doesn't have yet: ,linux/riscv64
             cache-from: "type=gha" # all-automatic Github Actions caching
             cache-to: "type=gha,mode=max" # all-automatic Github Actions caching, max mode
-          ## WAIT ## - os: "debian"
-          ## WAIT ##   release: "bookworm"
-          ## WAIT ##   platforms: "linux/amd64,linux/arm64"
-          ## WAIT ##   cache-from: ""
-          ## WAIT ##   cache-to: ""
-          ## WAIT ## - os: "debian"
-          ## WAIT ##   release: "trixie"
-          ## WAIT ##   platforms: "linux/amd64,linux/arm64"
-          ## WAIT ##   cache-from: ""
-          ## WAIT ##   cache-to: ""
-          ## WAIT ## - os: "debian"
-          ## WAIT ##   release: "sid"
-          ## WAIT ##   platforms: "linux/amd64,linux/arm64" # debian:sid is the only image with riscv64 as of 2024-03-03, but is hasn't all the toolchains yet: ,linux/riscv64
-          ## WAIT ##   cache-from: ""
-          ## WAIT ##   cache-to: ""
-          ## WAIT ## - os: "ubuntu"
-          ## WAIT ##   release: "noble"
-          ## WAIT ##   platforms: "linux/amd64,linux/arm64" # Ubuntu doesn't have yet: ,linux/riscv64
-          ## WAIT ##   cache-from: ""
-          ## WAIT ##   cache-to: ""
+          - os: "debian"
+            release: "bookworm"
+            platforms: "linux/amd64,linux/arm64"
+            cache-from: ""
+            cache-to: ""
+          - os: "debian"
+            release: "trixie"
+            platforms: "linux/amd64,linux/arm64"
+            cache-from: ""
+            cache-to: ""
+          - os: "debian"
+            release: "sid"
+            platforms: "linux/amd64,linux/arm64" # debian:sid is the only image with riscv64 as of 2024-03-03, but is hasn't all the toolchains yet: ,linux/riscv64
+            cache-from: ""
+            cache-to: ""
+          - os: "ubuntu"
+            release: "noble"
+            platforms: "linux/amd64,linux/arm64" # Ubuntu doesn't have yet: ,linux/riscv64
+            cache-from: ""
+            cache-to: ""
     name: "${{ matrix.release }} (${{ matrix.os }})"
     env:
       DOCKERFILE_OS: "${{ matrix.os }}"
