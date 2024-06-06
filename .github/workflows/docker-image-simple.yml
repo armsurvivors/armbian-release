@@ -26,7 +26,7 @@ jobs:
             cache-to: "" # no caching
           - os: "debian"
             release: "sid"
-            platforms: "linux/amd64,linux/arm64,linux/riscv64" # sid has linux/riscv64!
+            platforms: "linux/amd64,linux/arm64" # sid has linux/riscv64, but it doesn't carry packages we need yet.
             cache-from: "" # no caching
             cache-to: "" # no caching
           - os: "ubuntu"
