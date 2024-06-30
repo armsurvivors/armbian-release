@@ -65,7 +65,7 @@ env:
 jobs:
 
   matrix_prep:
-    name: "JSON matrix: 2/2 :: 2 artifact chunks, 2 image chunks"
+    name: "JSON matrix: 5/2 :: 5 artifact chunks, 2 image chunks"
     if: ${{ github.repository_owner == 'armsurvivors' }}
     runs-on: [ "self-hosted", "Linux", 'armbian', "matrix-prepare" ]
     steps:
@@ -141,7 +141,7 @@ jobs:
           bash ./compile.sh gha-matrix rpardini-generic ${{env.EXTRA_PARAMS_ALL_BUILDS}} \
             REVISION="${{ steps.prepare-date-outputs.outputs.revision_release }}" \
             TARGETS_FILTER_INCLUDE='${{ github.event.inputs.targetsFilterInclude || '' }}' \
-            MATRIX_ARTIFACT_CHUNKS=2 \
+            MATRIX_ARTIFACT_CHUNKS=5 \
             MATRIX_IMAGE_CHUNKS=2 \
             BETA=${{ github.event.inputs.nightly || 'yes' }} \
             CHECK_OCI=${{ github.event.inputs.checkOci || 'yes' }} \
@@ -180,14 +180,26 @@ jobs:
 
 # template file: 150.per-chunk-artifacts_prep-outputs.yaml
 
-      # artifacts-1 of 2
+      # artifacts-1 of 5
       artifacts-chunk-json-1: ${{ steps.prepare-matrix.outputs.artifacts-chunk-json-1 }}
       artifacts-chunk-not-empty-1: ${{ steps.prepare-matrix.outputs.artifacts-chunk-not-empty-1 }}
       artifacts-chunk-size-1: ${{ steps.prepare-matrix.outputs.artifacts-chunk-size-1 }}
-      # artifacts-2 of 2
+      # artifacts-2 of 5
       artifacts-chunk-json-2: ${{ steps.prepare-matrix.outputs.artifacts-chunk-json-2 }}
       artifacts-chunk-not-empty-2: ${{ steps.prepare-matrix.outputs.artifacts-chunk-not-empty-2 }}
       artifacts-chunk-size-2: ${{ steps.prepare-matrix.outputs.artifacts-chunk-size-2 }}
+      # artifacts-3 of 5
+      artifacts-chunk-json-3: ${{ steps.prepare-matrix.outputs.artifacts-chunk-json-3 }}
+      artifacts-chunk-not-empty-3: ${{ steps.prepare-matrix.outputs.artifacts-chunk-not-empty-3 }}
+      artifacts-chunk-size-3: ${{ steps.prepare-matrix.outputs.artifacts-chunk-size-3 }}
+      # artifacts-4 of 5
+      artifacts-chunk-json-4: ${{ steps.prepare-matrix.outputs.artifacts-chunk-json-4 }}
+      artifacts-chunk-not-empty-4: ${{ steps.prepare-matrix.outputs.artifacts-chunk-not-empty-4 }}
+      artifacts-chunk-size-4: ${{ steps.prepare-matrix.outputs.artifacts-chunk-size-4 }}
+      # artifacts-5 of 5
+      artifacts-chunk-json-5: ${{ steps.prepare-matrix.outputs.artifacts-chunk-json-5 }}
+      artifacts-chunk-not-empty-5: ${{ steps.prepare-matrix.outputs.artifacts-chunk-not-empty-5 }}
+      artifacts-chunk-size-5: ${{ steps.prepare-matrix.outputs.artifacts-chunk-size-5 }}
 
 # template file: 151.per-chunk-images_prep-outputs.yaml
 
@@ -205,10 +217,10 @@ jobs:
   # ------ aggregate all artifact chunks into a single dependency -------
 
   all-artifacts-ready:
-    name: "2 artifacts chunks ready"
+    name: "5 artifacts chunks ready"
     runs-on: ubuntu-latest # not going to run, anyway, but is required.
     if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
-    needs: [ "matrix_prep", "build-artifacts-chunk-1","build-artifacts-chunk-2" ] # <-- HERE: all artifact chunk numbers.
+    needs: [ "matrix_prep", "build-artifacts-chunk-1","build-artifacts-chunk-2","build-artifacts-chunk-3","build-artifacts-chunk-4","build-artifacts-chunk-5" ] # <-- HERE: all artifact chunk numbers.
     steps:
       - name: fake step
         run: uptime
@@ -223,7 +235,7 @@ jobs:
         run: uptime
 
   all-artifacts-and-images-ready:
-    name: "2 artifact chunks and 2 image chunks ready"
+    name: "5 artifact chunks and 2 image chunks ready"
     runs-on: ubuntu-latest # not going to run, anyway, but is required.
     if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
     needs: [ "matrix_prep", "all-artifacts-ready", "all-images-ready" ]
@@ -232,7 +244,7 @@ jobs:
         run: uptime
 
   all-artifacts-and-repo-ready:
-    name: "2 artifact chunks and apt repository ready"
+    name: "5 artifact chunks and apt repository ready"
     runs-on: ubuntu-latest # not going to run, anyway, but is required.
     if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
     needs: [ "matrix_prep", "all-artifacts-ready", "publish-debs-to-repo" ]
@@ -312,6 +324,195 @@ jobs:
       fail-fast: false # let other jobs try to complete if one fails
       matrix: ${{ fromJSON(needs.matrix_prep.outputs.artifacts-chunk-json-2) }} # <-- HERE: Chunk number.
     name: ${{ matrix.desc || 'Empty A2' }} # <-- HERE: Chunk number.
+    timeout-minutes: 120
+    runs-on: ${{ matrix.runs_on }}
+    steps:
+
+      #- name: Runner clean
+      #  uses: armbian/actions/runner-clean@main
+
+      # Login to ghcr.io, for later uploading rootfs to ghcr.io
+      - name: Docker Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: "${{ github.repository_owner }}" # GitHub username or org
+          password: ${{ secrets.GITHUB_TOKEN }}    # GitHub actions builtin token. repo has to have pkg access.
+
+      # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
+      - name: Cleanup userpatches repo
+        if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
+        run: rm -rf userpatches.repo
+
+      - name: "Checkout build repo with depth ${{ matrix.fdepth }}"
+        uses: actions/checkout@v3 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        with:
+          repository: ${{ env.BUILD_REPOSITORY }}
+          ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
+          fetch-depth: ${{ matrix.fdepth }} # fetch all history for self-hosted, but shallow for GH-hosted
+          clean: false # true is default. it *will* delete the hosts /dev if mounted inside.
+
+      # clone the userpatches repo (`armbian/os`)
+      - name: "Checkout userpatches repo with depth ${{ matrix.fdepth }}: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
+        uses: actions/checkout@v3
+        if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
+        with:
+          repository: ${{ env.USERPATCHES_REPOSITORY }}
+          ref: ${{ env.USERPATCHES_REF }}
+          fetch-depth: ${{ matrix.fdepth }} # fetch all history for self-hosted, but shallow for GH-hosted
+          clean: false # true is default.
+          path: userpatches.repo
+
+      - name: "Put userpatches in place, and remove userpatches repo"
+        if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
+        run: |
+          mkdir -pv userpatches
+          rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
+          rm -rf userpatches.repo
+
+      - name: Build  ${{matrix.desc}}
+        id: build
+        run: |
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} UPLOAD_TO_OCI_ONLY=yes
+
+      - name: "Logs: ${{ steps.build.outputs.logs_url }}"
+        if: always()
+        run: |
+          echo "Logs: ${{ steps.build.outputs.logs_url }}"
+
+  "build-artifacts-chunk-3": # templated "build-artifacts-chunk-3"
+    if: ${{ github.repository_owner == 'armsurvivors' && needs.matrix_prep.outputs.artifacts-chunk-not-empty-3 == 'yes' }}  # <-- HERE: Chunk number.
+    needs: [ "matrix_prep" ]
+    strategy:
+      fail-fast: false # let other jobs try to complete if one fails
+      matrix: ${{ fromJSON(needs.matrix_prep.outputs.artifacts-chunk-json-3) }} # <-- HERE: Chunk number.
+    name: ${{ matrix.desc || 'Empty A3' }} # <-- HERE: Chunk number.
+    timeout-minutes: 120
+    runs-on: ${{ matrix.runs_on }}
+    steps:
+
+      #- name: Runner clean
+      #  uses: armbian/actions/runner-clean@main
+
+      # Login to ghcr.io, for later uploading rootfs to ghcr.io
+      - name: Docker Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: "${{ github.repository_owner }}" # GitHub username or org
+          password: ${{ secrets.GITHUB_TOKEN }}    # GitHub actions builtin token. repo has to have pkg access.
+
+      # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
+      - name: Cleanup userpatches repo
+        if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
+        run: rm -rf userpatches.repo
+
+      - name: "Checkout build repo with depth ${{ matrix.fdepth }}"
+        uses: actions/checkout@v3 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        with:
+          repository: ${{ env.BUILD_REPOSITORY }}
+          ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
+          fetch-depth: ${{ matrix.fdepth }} # fetch all history for self-hosted, but shallow for GH-hosted
+          clean: false # true is default. it *will* delete the hosts /dev if mounted inside.
+
+      # clone the userpatches repo (`armbian/os`)
+      - name: "Checkout userpatches repo with depth ${{ matrix.fdepth }}: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
+        uses: actions/checkout@v3
+        if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
+        with:
+          repository: ${{ env.USERPATCHES_REPOSITORY }}
+          ref: ${{ env.USERPATCHES_REF }}
+          fetch-depth: ${{ matrix.fdepth }} # fetch all history for self-hosted, but shallow for GH-hosted
+          clean: false # true is default.
+          path: userpatches.repo
+
+      - name: "Put userpatches in place, and remove userpatches repo"
+        if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
+        run: |
+          mkdir -pv userpatches
+          rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
+          rm -rf userpatches.repo
+
+      - name: Build  ${{matrix.desc}}
+        id: build
+        run: |
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} UPLOAD_TO_OCI_ONLY=yes
+
+      - name: "Logs: ${{ steps.build.outputs.logs_url }}"
+        if: always()
+        run: |
+          echo "Logs: ${{ steps.build.outputs.logs_url }}"
+
+  "build-artifacts-chunk-4": # templated "build-artifacts-chunk-4"
+    if: ${{ github.repository_owner == 'armsurvivors' && needs.matrix_prep.outputs.artifacts-chunk-not-empty-4 == 'yes' }}  # <-- HERE: Chunk number.
+    needs: [ "matrix_prep" ]
+    strategy:
+      fail-fast: false # let other jobs try to complete if one fails
+      matrix: ${{ fromJSON(needs.matrix_prep.outputs.artifacts-chunk-json-4) }} # <-- HERE: Chunk number.
+    name: ${{ matrix.desc || 'Empty A4' }} # <-- HERE: Chunk number.
+    timeout-minutes: 120
+    runs-on: ${{ matrix.runs_on }}
+    steps:
+
+      #- name: Runner clean
+      #  uses: armbian/actions/runner-clean@main
+
+      # Login to ghcr.io, for later uploading rootfs to ghcr.io
+      - name: Docker Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: "${{ github.repository_owner }}" # GitHub username or org
+          password: ${{ secrets.GITHUB_TOKEN }}    # GitHub actions builtin token. repo has to have pkg access.
+
+      # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
+      - name: Cleanup userpatches repo
+        if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
+        run: rm -rf userpatches.repo
+
+      - name: "Checkout build repo with depth ${{ matrix.fdepth }}"
+        uses: actions/checkout@v3 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        with:
+          repository: ${{ env.BUILD_REPOSITORY }}
+          ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
+          fetch-depth: ${{ matrix.fdepth }} # fetch all history for self-hosted, but shallow for GH-hosted
+          clean: false # true is default. it *will* delete the hosts /dev if mounted inside.
+
+      # clone the userpatches repo (`armbian/os`)
+      - name: "Checkout userpatches repo with depth ${{ matrix.fdepth }}: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
+        uses: actions/checkout@v3
+        if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
+        with:
+          repository: ${{ env.USERPATCHES_REPOSITORY }}
+          ref: ${{ env.USERPATCHES_REF }}
+          fetch-depth: ${{ matrix.fdepth }} # fetch all history for self-hosted, but shallow for GH-hosted
+          clean: false # true is default.
+          path: userpatches.repo
+
+      - name: "Put userpatches in place, and remove userpatches repo"
+        if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
+        run: |
+          mkdir -pv userpatches
+          rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
+          rm -rf userpatches.repo
+
+      - name: Build  ${{matrix.desc}}
+        id: build
+        run: |
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} UPLOAD_TO_OCI_ONLY=yes
+
+      - name: "Logs: ${{ steps.build.outputs.logs_url }}"
+        if: always()
+        run: |
+          echo "Logs: ${{ steps.build.outputs.logs_url }}"
+
+  "build-artifacts-chunk-5": # templated "build-artifacts-chunk-5"
+    if: ${{ github.repository_owner == 'armsurvivors' && needs.matrix_prep.outputs.artifacts-chunk-not-empty-5 == 'yes' }}  # <-- HERE: Chunk number.
+    needs: [ "matrix_prep" ]
+    strategy:
+      fail-fast: false # let other jobs try to complete if one fails
+      matrix: ${{ fromJSON(needs.matrix_prep.outputs.artifacts-chunk-json-5) }} # <-- HERE: Chunk number.
+    name: ${{ matrix.desc || 'Empty A5' }} # <-- HERE: Chunk number.
     timeout-minutes: 120
     runs-on: ${{ matrix.runs_on }}
     steps:
