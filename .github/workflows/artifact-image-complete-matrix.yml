@@ -53,7 +53,7 @@ env:
 
   # Armbian envs. Adjust to your needs.
   # OCI_TARGET_BASE: "ghcr.io/${{ github.repository }}/" # This is picked up by the Docker launcher automatically. It does _not_ override the targets.yaml during info resolution.
-  DOCKER_ARMBIAN_BASE_COORDINATE_PREFIX: "ghcr.io/armsurvivors/armbian-builder:armbian-next-" # Use Docker image in same repo
+  DOCKER_ARMBIAN_BASE_COORDINATE_PREFIX: "ghcr.io/armsurvivors/armbian-release:armbian-" # Use Docker image in same repo
   DOCKER_SKIP_UPDATE: "yes" # Do not apt update/install/requirements/etc during Dockerfile build, trust DOCKER_ARMBIAN_BASE_COORDINATE_PREFIX's images are up-to-date
 
   # Added to every build, even the prepare job.
@@ -77,8 +77,8 @@ jobs:
       - name: "Prepare date-based release outputs"
         id: prepare-date-outputs
         run: |
-          echo "images_release=$(date +%y.%m.%d)-armsurvivors-${{ github.run_number }}" >> $GITHUB_OUTPUT
-          echo "revision_release=$(date +%y.%m.%d)-armsurvivors-${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "images_release=$(date +%y.%m.%d)-${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "revision_release=$(date +%y.%m.%d)-${{ github.run_number }}" >> $GITHUB_OUTPUT
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -115,6 +115,16 @@ jobs:
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
           rm -rf userpatches.repo
 
+      #- name: GitHub cache
+      #  id: cache-restore
+      #  uses: actions/cache@v4
+      #  with:
+      #    path: |
+      #      cache/memoize
+      #      cache/oci/positive
+      #    key: ${{ runner.os }}-matrix-cache-${{ github.sha }}-${{ steps.latest-commit.outputs.sha1 }}"
+      #    restore-keys: |
+      #      ${{ runner.os }}-matrix-cache-
 
       # Login to ghcr.io, we're gonna do a lot of OCI lookups.
       - name: Docker Login to GitHub Container Registry
