@@ -67,7 +67,7 @@ jobs:
   matrix_prep:
     name: "JSON matrix: 5/2 :: 5 artifact chunks, 2 image chunks"
     if: ${{ github.repository_owner == 'armsurvivors' }}
-    runs-on: [ "self-hosted", "Linux", 'armbian', "matrix-prepare" ]
+    runs-on: ubuntu-latest
     steps:
 
       #- name: Runner clean
