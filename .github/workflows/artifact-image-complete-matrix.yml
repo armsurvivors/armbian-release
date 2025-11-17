@@ -86,7 +86,7 @@ jobs:
         run: rm -rf userpatches.repo
 
       - name: Checkout build repo
-        uses: actions/checkout@v4 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        uses: actions/checkout@v5 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
         with:
           repository: ${{ env.BUILD_REPOSITORY }}
           ref: ${{ env.BUILD_REF }}
@@ -99,7 +99,7 @@ jobs:
 
       # clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -157,7 +157,7 @@ jobs:
           sudo chown -R $USER:$USER cache/memoize cache/oci/positive
 
       # Store output/info folder in a GitHub Actions artifact
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         name: Upload output/info as GitHub Artifact
         with:
           name: build-info-json
@@ -282,7 +282,7 @@ jobs:
         run: rm -rf userpatches.repo
 
       - name: "Checkout build repo with depth ${{ matrix.fdepth }}"
-        uses: actions/checkout@v4 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        uses: actions/checkout@v5 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
         with:
           repository: ${{ env.BUILD_REPOSITORY }}
           ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
@@ -291,7 +291,7 @@ jobs:
 
       # clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo with depth ${{ matrix.fdepth }}: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -345,7 +345,7 @@ jobs:
         run: rm -rf userpatches.repo
 
       - name: "Checkout build repo with depth ${{ matrix.fdepth }}"
-        uses: actions/checkout@v4 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        uses: actions/checkout@v5 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
         with:
           repository: ${{ env.BUILD_REPOSITORY }}
           ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
@@ -354,7 +354,7 @@ jobs:
 
       # clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo with depth ${{ matrix.fdepth }}: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -408,7 +408,7 @@ jobs:
         run: rm -rf userpatches.repo
 
       - name: "Checkout build repo with depth ${{ matrix.fdepth }}"
-        uses: actions/checkout@v4 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        uses: actions/checkout@v5 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
         with:
           repository: ${{ env.BUILD_REPOSITORY }}
           ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
@@ -417,7 +417,7 @@ jobs:
 
       # clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo with depth ${{ matrix.fdepth }}: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -471,7 +471,7 @@ jobs:
         run: rm -rf userpatches.repo
 
       - name: "Checkout build repo with depth ${{ matrix.fdepth }}"
-        uses: actions/checkout@v4 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        uses: actions/checkout@v5 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
         with:
           repository: ${{ env.BUILD_REPOSITORY }}
           ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
@@ -480,7 +480,7 @@ jobs:
 
       # clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo with depth ${{ matrix.fdepth }}: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -534,7 +534,7 @@ jobs:
         run: rm -rf userpatches.repo
 
       - name: "Checkout build repo with depth ${{ matrix.fdepth }}"
-        uses: actions/checkout@v4 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        uses: actions/checkout@v5 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
         with:
           repository: ${{ env.BUILD_REPOSITORY }}
           ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
@@ -543,7 +543,7 @@ jobs:
 
       # clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo with depth ${{ matrix.fdepth }}: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -597,7 +597,7 @@ jobs:
         run: rm -rf userpatches.repo
 
       - name: "Checkout build repo with depth ${{ matrix.fdepth }}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.BUILD_REPOSITORY }}
           ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
@@ -606,7 +606,7 @@ jobs:
 
       # clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo with depth ${{ matrix.fdepth }}: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -684,7 +684,7 @@ jobs:
         run: rm -rf userpatches.repo
 
       - name: "Checkout build repo with depth ${{ matrix.fdepth }}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.BUILD_REPOSITORY }}
           ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
@@ -693,7 +693,7 @@ jobs:
 
       # clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo with depth ${{ matrix.fdepth }}: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -785,7 +785,7 @@ jobs:
         run: rm -rf userpatches.repo
 
       - name: Checkout build repo
-        uses: actions/checkout@v4 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        uses: actions/checkout@v5 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
         with:
           repository: ${{ env.BUILD_REPOSITORY }}
           ref: ${{ needs.matrix_prep.outputs.build-sha1 }}
@@ -794,7 +794,7 @@ jobs:
 
       # clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -823,7 +823,7 @@ jobs:
 
       # Download the artifacts (output/info) produced by the prepare-matrix job.
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-info-json
           path: output/info
