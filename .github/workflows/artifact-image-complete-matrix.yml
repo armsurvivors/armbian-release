@@ -61,7 +61,9 @@ env:
 
   # Added to every image build arguments.
   EXTRA_PARAMS_IMAGE: "'DONT_BUILD_ARTIFACTS=any' COMPRESS_OUTPUTIMAGE=zst SHOW_DEBIAN=yes SKIP_CUSTOM_REPO=${{github.event.inputs.skipCustomRepo}}" # IMAGE_VERSION is individually added at the build step.
-
+  EXTRA_PARAMS_ARTIFACT: "" # not used currently
+  EXTRA_PARAMS_IMAGE_ARTIFACT: "MEMOIZE_TTL_FORCE=86400"
+  EXTRA_PARAMS_REPO: "MEMOIZE_TTL_FORCE=86400"
 jobs:
 
   matrix_prep:
@@ -159,10 +161,24 @@ jobs:
       # Store output/info folder in a GitHub Actions artifact
       - uses: actions/upload-artifact@v5
         name: Upload output/info as GitHub Artifact
-        continue-on-error: true # 20251117: all artifact uploads are broken at GHA
         with:
           name: build-info-json
           path: output/info
+
+      # Save a cache including memoize and oci positive cache, specific to _this run_ - all other jobs will restore from it, so they'll use the same versions of everything as the prepare job did (MEMOIZE_TTL_FORCE=86400); much faster too
+      - name: GitHub cache save memoize
+        uses: actions/cache/save@v4
+        id: save_memoize_cache
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number: all jobs will use it
+
+      - name: GitHub cache save oci positive
+        uses: actions/cache/save@v4
+        id: save_ocipositive_cache
+        with:
+          path: cache/oci/positive
+          key: oci-positive-${{ github.run_number }} # keyed by run_number
 
       - name: Prepare GH Release
         uses: "marvinpinto/action-automatic-releases@latest" # @TODO this is outdated, needs replacement. Also it deletes the release if it already exists, which is not what we want. Might be necessary to move the tag.
@@ -248,7 +264,7 @@ jobs:
     name: "5 artifact chunks and apt repository ready"
     runs-on: ubuntu-latest # not going to run, anyway, but is required.
     if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
-    needs: [ "matrix_prep", "all-artifacts-ready" ] # TODO: GHA ARTIFACT UPLOAD IS BORKEN: , "publish-debs-to-repo" ]
+    needs: [ "matrix_prep", "all-artifacts-ready" ] # it's 2026, and images don't need to wait for the repo. "publish-debs-to-repo"
     steps:
       - name: fake step
         run: uptime
@@ -308,10 +324,23 @@ jobs:
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
           rm -rf userpatches.repo
 
+      # Clean the memoize cache destination to avoid stale data
+      - name: Clean memoize cache destination
+        run: rm -rf cache/memoize
+
+      # Restore the memoize cache; required and job should fail it this fails
+      - name: GitHub cache restore memoize
+        uses: actions/cache@v4
+        id: cache-restore-memoize
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number
+          fail-on-cache-miss: true
+
       - name: Build  ${{matrix.desc}}
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} UPLOAD_TO_OCI_ONLY=yes
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_IMAGE_ARTIFACT}} ${{env.EXTRA_PARAMS_ARTIFACT}} UPLOAD_TO_OCI_ONLY=yes
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -371,10 +400,23 @@ jobs:
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
           rm -rf userpatches.repo
 
+      # Clean the memoize cache destination to avoid stale data
+      - name: Clean memoize cache destination
+        run: rm -rf cache/memoize
+
+      # Restore the memoize cache; required and job should fail it this fails
+      - name: GitHub cache restore memoize
+        uses: actions/cache@v4
+        id: cache-restore-memoize
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number
+          fail-on-cache-miss: true
+
       - name: Build  ${{matrix.desc}}
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} UPLOAD_TO_OCI_ONLY=yes
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_IMAGE_ARTIFACT}} ${{env.EXTRA_PARAMS_ARTIFACT}} UPLOAD_TO_OCI_ONLY=yes
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -434,10 +476,23 @@ jobs:
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
           rm -rf userpatches.repo
 
+      # Clean the memoize cache destination to avoid stale data
+      - name: Clean memoize cache destination
+        run: rm -rf cache/memoize
+
+      # Restore the memoize cache; required and job should fail it this fails
+      - name: GitHub cache restore memoize
+        uses: actions/cache@v4
+        id: cache-restore-memoize
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number
+          fail-on-cache-miss: true
+
       - name: Build  ${{matrix.desc}}
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} UPLOAD_TO_OCI_ONLY=yes
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_IMAGE_ARTIFACT}} ${{env.EXTRA_PARAMS_ARTIFACT}} UPLOAD_TO_OCI_ONLY=yes
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -497,10 +552,23 @@ jobs:
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
           rm -rf userpatches.repo
 
+      # Clean the memoize cache destination to avoid stale data
+      - name: Clean memoize cache destination
+        run: rm -rf cache/memoize
+
+      # Restore the memoize cache; required and job should fail it this fails
+      - name: GitHub cache restore memoize
+        uses: actions/cache@v4
+        id: cache-restore-memoize
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number
+          fail-on-cache-miss: true
+
       - name: Build  ${{matrix.desc}}
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} UPLOAD_TO_OCI_ONLY=yes
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_IMAGE_ARTIFACT}} ${{env.EXTRA_PARAMS_ARTIFACT}} UPLOAD_TO_OCI_ONLY=yes
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -560,10 +628,23 @@ jobs:
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
           rm -rf userpatches.repo
 
+      # Clean the memoize cache destination to avoid stale data
+      - name: Clean memoize cache destination
+        run: rm -rf cache/memoize
+
+      # Restore the memoize cache; required and job should fail it this fails
+      - name: GitHub cache restore memoize
+        uses: actions/cache@v4
+        id: cache-restore-memoize
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number
+          fail-on-cache-miss: true
+
       - name: Build  ${{matrix.desc}}
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} UPLOAD_TO_OCI_ONLY=yes
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_IMAGE_ARTIFACT}} ${{env.EXTRA_PARAMS_ARTIFACT}} UPLOAD_TO_OCI_ONLY=yes
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -623,6 +704,19 @@ jobs:
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
           rm -rf userpatches.repo
 
+      # Clean the memoize cache destination to avoid stale data
+      - name: Clean memoize cache destination
+        run: rm -rf cache/memoize
+
+      # Restore the memoize cache; required and job should fail it this fails
+      - name: GitHub cache restore memoize
+        uses: actions/cache@v4
+        id: cache-restore-memoize
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number
+          fail-on-cache-miss: true
+
       - name: Cleanup leftover output images
         run: |
           rm -rfv output/images userpatches/VERSION
@@ -630,7 +724,7 @@ jobs:
       - name: ${{matrix.desc}}
         id: build-one-image
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_IMAGE}} ${{env.EXTRA_PARAMS_ALL_BUILDS}} OUTPUT_IMAGES_ONLY=yes
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_IMAGE_ARTIFACT}} ${{env.EXTRA_PARAMS_IMAGE}} OUTPUT_IMAGES_ONLY=yes
 
       - name: "Logs: ${{ steps.build-one-image.outputs.logs_url }}"
         if: always()
@@ -710,6 +804,19 @@ jobs:
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
           rm -rf userpatches.repo
 
+      # Clean the memoize cache destination to avoid stale data
+      - name: Clean memoize cache destination
+        run: rm -rf cache/memoize
+
+      # Restore the memoize cache; required and job should fail it this fails
+      - name: GitHub cache restore memoize
+        uses: actions/cache@v4
+        id: cache-restore-memoize
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number
+          fail-on-cache-miss: true
+
       - name: Cleanup leftover output images
         run: |
           rm -rfv output/images userpatches/VERSION
@@ -717,7 +824,7 @@ jobs:
       - name: ${{matrix.desc}}
         id: build-one-image
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_IMAGE}} ${{env.EXTRA_PARAMS_ALL_BUILDS}} OUTPUT_IMAGES_ONLY=yes
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_IMAGE_ARTIFACT}} ${{env.EXTRA_PARAMS_IMAGE}} OUTPUT_IMAGES_ONLY=yes
 
       - name: "Logs: ${{ steps.build-one-image.outputs.logs_url }}"
         if: always()
@@ -871,10 +978,23 @@ jobs:
           fi
           
 
+      # Clean the memoize cache destination to avoid stale data
+      - name: Clean memoize cache destination
+        run: rm -rf cache/memoize
+
+      # Restore the memoize cache; required and job should fail it this fails
+      - name: GitHub cache restore memoize
+        uses: actions/cache@v4
+        id: cache-restore-memoize
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number
+          fail-on-cache-miss: true
+
       - name: Integrated reprepro-based deb-download and reprepro script generation
         id: rolling-repo-reprepro-download-script
         run: |
-          bash ./compile.sh rpardini-generic debs-to-repo-rolling-reprepro REPO_REPREPRO_PATH=/armbian/output/reprepro-db REPO_GPG_KEYID="${{ steps.import_gpg.outputs.keyid }}" BETA=${{ github.event.inputs.nightly || 'yes' }} ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh rpardini-generic debs-to-repo-rolling-reprepro REPO_REPREPRO_PATH=/armbian/output/reprepro-db REPO_GPG_KEYID="${{ steps.import_gpg.outputs.keyid }}" BETA=${{ github.event.inputs.nightly || 'yes' }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_REPO}}
 
       - name: "Logs debs-to-repo-rolling-reprepro: ${{ steps.rolling-repo-reprepro-download-script.outputs.logs_url }}"
         run: |
